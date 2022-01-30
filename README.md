@@ -1,7 +1,5 @@
 # TP 01 ASE
 
-## Compilation
-Launch command ```make```  will compile excutable file try, try_mul, display_stack.
 
 ## Display_stack Explaination
 ESP is the register which point to the top of the stack (Stack Pointer).
@@ -19,3 +17,5 @@ This function simplifies the exuction process when encounter errors. In stead of
 Following the new version of the gcc compiler, the 32-bit execution posed problem, for the programe to work, a neccesarry change in registers is made :
 - esp changed by rsp; ebp changed by rbp, in the asm() instruction.
 
+## Compilation
+Launch command ```make```  will compile excutable file try, try_mul, display_stack.
