@@ -20,12 +20,11 @@ void switch_to_ctx(struct ctx_s * from, struct ctx_s * to) {
 	static struct ctx_s *ctx_to = NULL;
 	ctx_from = from;
 	ctx_to = to;
-/*in case of ctx_from exist and is running, save its SP and set state == running */
-
-
+	
 	assert (ctx_to != NULL);
 	assert(ctx_to->state < STATE_RUNNING);
-
+	
+	/*in the case of ctx_from exist and is running, save its SP and set state == running */
 	if (ctx_from != NULL) {
 		assert(ctx_from->state == STATE_RUNNING);
 		asm("mov %%rsp, %0" "\n\t" "mov %%rbp, %1"
@@ -34,17 +33,19 @@ void switch_to_ctx(struct ctx_s * from, struct ctx_s * to) {
 				 :);
 		ctx_from->state = STATE_PAUSED;
 	}
-
+	
+	
+	/*in the case of ctx_from is null, set directly the SP of the ctx_to context */
 	asm("mov %0, %%rsp" "\n\t" "mov %1, %%rbp"
 	:
 	:"r"(ctx_to->rsp),"r"(ctx_to->rbp)
 	:);
 
-
+	
 	if (ctx_to->state == STATE_NOT_START) {
 		ctx_to->state = STATE_RUNNING;
 		ctx_to->entryPointFunct (ctx_to->args);
-
+	/*while the state of the target context is running, "return" simply brings back its context*/
 	} else {
 		assert(ctx_to->state == STATE_PAUSED);
 		ctx_to->state = STATE_RUNNING;
