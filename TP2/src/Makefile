@@ -5,13 +5,9 @@ DEPS = switchto.h
 %.o: %.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
-
-
-switchto: switchto.o 
-	$(CC) -o switchto switchto.o
-
-
+main: main.o switchto.o
+	$(CC) -o main main.o switchto.o
 
 
 clean:
-	rm *.o switchto
+	rm *.o switchto main
