@@ -2,12 +2,15 @@
 #define __YIELD_H__
 
 #include "list.h"
+#include "minilib.h"
 
 #define STACK_SIZE 8192
+#define STASH_SIZE 256
 #define STATE_NOT_START 0
 #define STATE_PAUSED 1
 #define STATE_RUNNING 2
 #define STATE_FINNISH 3
+
 
 typedef void(*func_t)(void*);
 
@@ -25,6 +28,8 @@ typedef struct Ctx_s {
 /*holds only the header of the linked list, but has no content of a context*/
 typedef struct YieldCtx {
 	Ctx_s* current;
+	Ctx_s stash[STASH_SIZE];
+	int lastAssignedContext;
 	struct list_head contexts;
 }YieldCtx;
 

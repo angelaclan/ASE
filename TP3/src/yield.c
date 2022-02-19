@@ -1,11 +1,10 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
+
 #include "yield.h"
 
 /*represent head of linked list and the current context*/
 void initYieldContext(YieldCtx *ctx) {
 	INIT_LIST_HEAD(&(ctx->contexts));
+	ctx->lastAssignedContext = 0;
 	ctx->current = NULL;
 }
 
@@ -29,7 +28,7 @@ void switch_to_ctx(Ctx_s *from, Ctx_s *to) {
 	/*in case of ctx_from exist and is running, save its SP and set state == running */
 	if (ctx_from != NULL) {
 		assert(ctx_from->state == STATE_RUNNING);
-		asm("mov %%rsp, %0" "\n\t" "mov %%rbp, %1"
+		asm("mov %%esp, %0" "\n\t" "mov %%ebp, %1"
 				:"=r"(ctx_from->rsp),"=r"(ctx_from->rbp)
 				:
 				:);
@@ -37,21 +36,21 @@ void switch_to_ctx(Ctx_s *from, Ctx_s *to) {
 	}
 
 	/*in the case of ctx_from is null, set directly the SP of the ctx_to context */
-	asm("mov %0, %%rsp" "\n\t" "mov %1, %%rbp"
+	asm("mov %0, %%esp" "\n\t" "mov %1, %%ebp"
 			:
 			:"r"(ctx_to->rsp),"r"(ctx_to->rbp)
 			:);
 
-	printf("switch to running 1\n");
+
 	if (ctx_to->state == STATE_NOT_START) {
-		printf("switch to running 4\n");
+
 		start_state(ctx_to);
 		/*while the state of the target context is running, "return" simply brings back its context*/
 	} else {
 		assert(ctx_to->state == STATE_PAUSED);
 		ctx_to->state = STATE_RUNNING;
 	}
-	printf(" switched \n ");
+
 }
 
 void start_state(Ctx_s *ctx) {
@@ -64,7 +63,10 @@ void start_state(Ctx_s *ctx) {
  */
 Ctx_s* create_ctx(YieldCtx *ctxx, func_t f, void *args) {
 	Ctx_s *newCtx;
-	newCtx = (Ctx_s*) malloc(sizeof(Ctx_s));
+
+	newCtx = &(ctxx->stash[ctxx->lastAssignedContext]);
+	ctxx->lastAssignedContext++;
+	assert(ctxx->lastAssignedContext < STASH_SIZE);
 	init_ctx(newCtx, f, args);
 	INIT_LIST_HEAD(&(newCtx->myContext));
 	/*add nex context to the head of linked list (contextx)*/

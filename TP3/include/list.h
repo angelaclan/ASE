@@ -5,6 +5,7 @@
 #define NULL ((void*)0)
 #endif
 
+#define size_t unsigned int
 /* --------------------- USEFUL MACROS ------------------------------ */
 
 /*
