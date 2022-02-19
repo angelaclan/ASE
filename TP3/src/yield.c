@@ -20,6 +20,8 @@ void switch_to_ctx(Ctx_s *from, Ctx_s *to) {
 	static Ctx_s *ctx_from = NULL;
 	static Ctx_s *ctx_to = NULL;
 
+	irq_disable();
+
 	ctx_from = from;
 	ctx_to = to;
 	assert(ctx_to != NULL);
@@ -51,6 +53,8 @@ void switch_to_ctx(Ctx_s *from, Ctx_s *to) {
 		ctx_to->state = STATE_RUNNING;
 	}
 
+	irq_enable();
+
 }
 
 void start_state(Ctx_s *ctx) {
@@ -79,6 +83,8 @@ void __yield(YieldCtx *ctxt) {
 	Ctx_s *previous = ctxt->current;
 	Ctx_s *next;
 
+	irq_disable();
+
 	/* in the scenario where list is not NULL :
 	 * then the next entry willbe the current node -> next
 	 * */
@@ -105,6 +111,9 @@ void __yield(YieldCtx *ctxt) {
 		/*get context 1*/
 		ctxt->current = list_first_entry(&(ctxt->contexts), Ctx_s, myContext);
 	}
+
+	irp_enable();
+
 	switch_to_ctx(previous, ctxt->current);
 }
 
