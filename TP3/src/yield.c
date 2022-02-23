@@ -1,5 +1,6 @@
 
 #include "yield.h"
+#include "idt.h"
 
 /*represent head of linked list and the current context*/
 void initYieldContext(YieldCtx *ctx) {
@@ -20,8 +21,6 @@ void switch_to_ctx(Ctx_s *from, Ctx_s *to) {
 	static Ctx_s *ctx_from = NULL;
 	static Ctx_s *ctx_to = NULL;
 
-	irq_disable();
-
 	ctx_from = from;
 	ctx_to = to;
 	assert(ctx_to != NULL);
@@ -36,6 +35,7 @@ void switch_to_ctx(Ctx_s *from, Ctx_s *to) {
 				:);
 		ctx_from->state = STATE_PAUSED;
 	}
+
 
 	/*in the case of ctx_from is null, set directly the SP of the ctx_to context */
 	asm("mov %0, %%esp" "\n\t" "mov %1, %%ebp"
@@ -52,8 +52,6 @@ void switch_to_ctx(Ctx_s *from, Ctx_s *to) {
 		assert(ctx_to->state == STATE_PAUSED);
 		ctx_to->state = STATE_RUNNING;
 	}
-
-	irq_enable();
 
 }
 
@@ -73,20 +71,21 @@ Ctx_s* create_ctx(YieldCtx *ctxx, func_t f, void *args) {
 	assert(ctxx->lastAssignedContext < STASH_SIZE);
 	init_ctx(newCtx, f, args);
 	INIT_LIST_HEAD(&(newCtx->myContext));
-	/*add nex context to the head of linked list (contextx)*/
+	/*add new context to the head of linked list (contexts)*/
 	list_add(&(newCtx->myContext), &(ctxx->contexts));
 	return newCtx;
 }
 
-/*passing yield context as argument for manipulating next and previous context easier*/
+/* passing yield context as argument for manipulating next and previous context easier*/
+
 void __yield(YieldCtx *ctxt) {
+
 	Ctx_s *previous = ctxt->current;
 	Ctx_s *next;
 
 	irq_disable();
-
 	/* in the scenario where list is not NULL :
-	 * then the next entry willbe the current node -> next
+	 * then the next entry will be the current node -> next
 	 * */
 	if (ctxt->current != NULL) {
 		next = list_next_entry(ctxt->current, myContext);
@@ -111,9 +110,7 @@ void __yield(YieldCtx *ctxt) {
 		/*get context 1*/
 		ctxt->current = list_first_entry(&(ctxt->contexts), Ctx_s, myContext);
 	}
-
-	irp_enable();
-
+	irq_enable();
 	switch_to_ctx(previous, ctxt->current);
-}
 
+}
